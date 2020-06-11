@@ -2,7 +2,6 @@ package loot.graphics;
 
 import java.awt.Graphics2D;
 import java.awt.Point;
-import java.util.ArrayList;
 
 /**
  * 2차원 평면 내(게임 화면 자체, 또는 Layer 안)에 위치하여 눈으로 직접 볼 수 있는 요소 하나를 추상화합니다.
@@ -190,39 +189,57 @@ public abstract class VisualObject
 	}
 	
 	
-	// 충돌용인데  인자의 width, height가 정상적으로 둘 다 양수일 경우 가능
+	// 충돌 체크
 	public final boolean CollisionTest(VisualObject obj) {
 	
 		int x_start = obj.x;
 		int y_start = obj.y;
 		int x_end = x_start + Math.abs(obj.width);
 		int y_end = y_start + Math.abs(obj.height);
-//		int x_end = x_start + 100;
-//		int y_end = y_start - 100;
-//		
-		int my_x_start = this.x + 10;
-		int my_y_start = this.y + 10;
-		int my_x_end = my_x_start + Math.abs(this.width) - 10;
-		int my_y_end = my_y_start + Math.abs(this.height) - 10;
+
+		int my_x_start = this.x;
+		int my_y_start = this.y;
+		int my_x_end = my_x_start + Math.abs(this.width);
+		int my_y_end = my_y_start + Math.abs(this.height);
 		
 		int temp_x, temp_y;
 		
-		for(temp_x = x_start; temp_x <= x_end; temp_x++) {
-			if(temp_x >= my_x_start && temp_x <= my_x_end && y_start >= my_y_start && y_start <= my_y_end)
+		
+		// this의 좌표를 한바퀴 돌면서 다른 ojb에 닿았는지 안 닿았는지 확인
+		for(temp_x = my_x_start; temp_x <= my_x_end; temp_x++) {
+			if(temp_x >= x_start && temp_x <= x_end && my_y_start >= y_start && my_y_start <= y_end)
 				return true;
 		}
-		for(temp_y = y_start; temp_y >= y_end; temp_y++) {
-			if(x_end >= my_x_start && x_end <= my_x_end && temp_y >= my_y_start && temp_y <= my_y_end)
+		for(temp_y = my_y_start; temp_y >= my_y_end; temp_y++) {
+			if(my_x_end >= x_start && my_x_end <= x_end && temp_y >= y_start && temp_y <= y_end)
 				return true;
 		}
-		for(temp_x = x_end; temp_x >= x_start; temp_x--) {
-			if(temp_x >= my_x_start && temp_x <= my_x_end && y_end >= my_y_start && y_end <= my_y_end)
+		for(temp_x = my_x_end; temp_x >= my_x_start; temp_x--) {
+			if(temp_x >= x_start && temp_x <= x_end && my_y_end >= y_start && my_y_end <= y_end)
 				return true;
 		}
-		for(temp_y = y_end; temp_y <= y_start; temp_y--) {
-			if(x_start >= my_x_start && x_start <= my_x_end && temp_y >= my_y_start && temp_y <= my_y_end)
+		for(temp_y = my_y_end; temp_y <= my_y_start; temp_y--) {
+			if(my_x_start >= x_start && my_x_start <= x_end && temp_y >= y_start && temp_y <= y_end)
 				return true;			
-		}			
+		}	
+
+		// Bug난 버전
+//		for(temp_x = x_start; temp_x <= x_end; temp_x++) {
+//			if(temp_x >= my_x_start && temp_x <= my_x_end && y_start >= my_y_start && y_start <= my_y_end)
+//				return true;
+//		}
+//		for(temp_y = y_start; temp_y >= y_end; temp_y++) {
+//			if(x_end >= my_x_start && x_end <= my_x_end && temp_y >= my_y_start && temp_y <= my_y_end)
+//				return true;
+//		}
+//		for(temp_x = x_end; temp_x >= x_start; temp_x--) {
+//			if(temp_x >= my_x_start && temp_x <= my_x_end && y_end >= my_y_start && y_end <= my_y_end)
+//				return true;
+//		}
+//		for(temp_y = y_end; temp_y <= y_start; temp_y--) {
+//			if(x_start >= my_x_start && x_start <= my_x_end && temp_y >= my_y_start && temp_y <= my_y_end)
+//				return true;			
+//		}	
 		return false;
 	}
 }
