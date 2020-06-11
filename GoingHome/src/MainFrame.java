@@ -1,16 +1,25 @@
 
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.Random;
 
 import loot.AudioManager;
 import loot.GameFrame;
 import loot.GameFrameSettings;
 import loot.graphics.DrawableObject;
+import loot.graphics.VisualObject;
 
 public class MainFrame extends GameFrame {
 	static final double coef_friction_x = -0.001;			//마찰력을 적용하기 위한 계수(속도에 이 값을 곱한 만큼이 마찰력이 됨. 따라서 이 값은 음수여야 함. 마찰력의 단위는 픽셀/ms^2)
 	static final double coef_friction_y = -0.005;			//마찰력을 적용하기 위한 계수(속도에 이 값을 곱한 만큼이 마찰력이 됨. 따라서 이 값은 음수여야 함. 마찰력의 단위는 픽셀/ms^2)
 
+	static final int numberOfEats = 5;
+	static final int eats_width = 100;
+	static final int eats_height = 100;
+	static final int player_width = 100;
+	static final int player_height = 50;
+	
 	//DrawableObject player_fish;
 	public class Player extends DrawableObject
 	{
@@ -23,17 +32,29 @@ public class MainFrame extends GameFrame {
 		
 		public Player(int x, int y)
 		{
-			super(x, y,	-100, 100, images.GetImage("img_fish"));
+			super(x, y,	player_width, player_height, images.GetImage("img_fish"));
 			
 			p_x = x;
 			p_y = y;
 		}
 	}
 	
+	public class Eats extends DrawableObject{
+		public double p_x;
+		public double p_y;
+		
+		public Eats(int x, int y) {
+			super(x, y, eats_width, eats_height, images.GetImage("img_shrimp"));
+			
+			p_x = x;
+			p_y = y;
+		}
+	}
 	Player player_fish;										// 플레이어 물고기
-	
+	//Eats[] eats = new Eats[numberOfEats];					// 먹으면 무적
+	ArrayList<Eats> eats = new ArrayList<Eats>();
 	long timeStamp_lastFrame = 0;							//직전 프레임의 timeStamp -> 물리량 계산에 사용
-	
+	long timeStamp_collision = 0;							// collision을 위한 timeStamp
 	int move_x;
 	int move_y;
 	
@@ -53,18 +74,26 @@ public class MainFrame extends GameFrame {
 		
 		
 		images.LoadImage("Images/고등어.png", "img_fish");
+		images.LoadImage("Images/새우.png", "img_shrimp");
 		audios.LoadAudio("Audios/01_오프닝 겸 기본 플레이 브금.wav", "main_bgm", 1);
 		
 	}
 
 	@Override
 	public boolean Initialize() {		
+		Random rand = new Random();
 		
 		// 불러온 이미지륿 필드에 할당해주기
 		//player_fish = new DrawableObject((800-329) / 2, (600 - 329) / 2, 329, 329, images.GetImage("img_fish"));
-		player_fish = new Player(100, 300);
+		player_fish = new Player(100, 100);
 		move_x = -5;
 		move_y = -10;
+		
+		
+		// 먹을 것 랜덤 배치
+		for(int iEats = 0; iEats < numberOfEats; iEats++)
+			eats.add(new Eats(rand.nextInt(settings.canvas_width - eats_width - 10) + 100, rand.nextInt(settings.canvas_height - eats_height - 10) + 1));
+			//eats[iEats] = new Eats(rand.nextInt(settings.canvas_width - eats_width - 10) + 100, rand.nextInt(settings.canvas_height - eats_height - 10) + 1);
 		
 		audios.Loop("main_bgm", -1);
 		return true;
@@ -158,6 +187,16 @@ public class MainFrame extends GameFrame {
 			player_fish.y = (int)player_fish.p_y;
 		}
 		
+		// 충돌테스트
+		if(timeStamp - timeStamp_collision >= 100) {
+			for(Eats eat : eats) {
+				if(player_fish.CollisionTest(eat) == true) {
+					eats.remove(eat);
+					break;
+				}
+			}
+			timeStamp_collision = timeStamp;
+		}
 		
 		// 이제 '직전 프레임'이 될 이번 프레임의 시작 시간 기록
 		timeStamp_lastFrame = timeStamp;
@@ -175,7 +214,8 @@ public class MainFrame extends GameFrame {
 		
 		// 얘는 지금 이해 못해. 그냥 항상 이렇게 적는다고 생각해.
 		player_fish.Draw(g);
-		
+		for(VisualObject eat : eats)
+			eat.Draw(g);
 		// 끝
 		EndDraw();
 	}
