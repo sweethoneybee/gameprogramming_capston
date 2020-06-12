@@ -11,14 +11,29 @@ import loot.graphics.DrawableObject;
 import loot.graphics.VisualObject;
 
 public class MainFrame extends GameFrame {
-	static final double coef_friction_x = -0.001;			//마찰력을 적용하기 위한 계수(속도에 이 값을 곱한 만큼이 마찰력이 됨. 따라서 이 값은 음수여야 함. 마찰력의 단위는 픽셀/ms^2)
-	static final double coef_friction_y = -0.005;			//마찰력을 적용하기 위한 계수(속도에 이 값을 곱한 만큼이 마찰력이 됨. 따라서 이 값은 음수여야 함. 마찰력의 단위는 픽셀/ms^2)
 
 	static final int numberOfEats = 5;
 	static final int eats_width = 100;
 	static final int eats_height = 100;
-	static final int player_width = 100;
-	static final int player_height = 50;
+	static final int player_width = 80; // 가로 : 세로 = 2 : 1 유지
+	static final int player_height = 40;
+	
+	// 속도용 상수 - 일정 시간마다 한 번씩 입력 받는 용
+//	static final double speed_limit = 0.4;					// 최대 속도
+//	static final double x_axis = 0.2;						// 플레이어 x축 이동 속도
+//	static final double y_axis = 0.2;						// 플레이어 y축 이동 속도
+//	static final double coef_friction_x = -0.0015;			//마찰력을 적용하기 위한 계수(속도에 이 값을 곱한 만큼이 마찰력이 됨. 따라서 이 값은 음수여야 함. 마찰력의 단위는 픽셀/ms^2)
+//	static final double coef_friction_y = -0.0015;			//마찰력을 적용하기 위한 계수(속도에 이 값을 곱한 만큼이 마찰력이 됨. 따라서 이 값은 음수여야 함. 마찰력의 단위는 픽셀/ms^2)
+
+	// 속도용 상수 - 꾹 누르는 입력 받는 용
+	static final double speed_limit = 0.2;					// 최대 속도
+	static final double x_axis = 0.004;						// 플레이어 x축 이동 속도
+	static final double y_axis = 0.004;						// 플레이어 y축 이동 속도
+	static final double coef_friction_x = -0.001;			//마찰력을 적용하기 위한 계수(속도에 이 값을 곱한 만큼이 마찰력이 됨. 따라서 이 값은 음수여야 함. 마찰력의 단위는 픽셀/ms^2)
+	static final double coef_friction_y = -0.001;			//마찰력을 적용하기 위한 계수(속도에 이 값을 곱한 만큼이 마찰력이 됨. 따라서 이 값은 음수여야 함. 마찰력의 단위는 픽셀/ms^2)
+	
+	// 키입력 횟수 제한 용
+	static boolean canInput = true;
 	
 	//DrawableObject player_fish;
 	public class Player extends DrawableObject
@@ -54,6 +69,7 @@ public class MainFrame extends GameFrame {
 	ArrayList<Eats> eats = new ArrayList<Eats>();			// 먹이
 	long timeStamp_lastFrame = 0;							//직전 프레임의 timeStamp -> 물리량 계산에 사용
 	long timeStamp_collision = 0;							// collision을 위한 timeStamp
+	long timeStamp_input = 0;								// 시간 당 input 횟수 제한을 위한 timeStamp
 	int move_x;
 	int move_y;
 	
@@ -102,6 +118,9 @@ public class MainFrame extends GameFrame {
 		
 		inputs.AcceptInputs();
 		
+		// 지난 프레임 이후로 경과된 시간 측정
+		double interval = timeStamp - timeStamp_lastFrame;
+		double interval_input = timeStamp - timeStamp_input;
 		double o_p_x, o_p_y;
 		int o_x, o_y;
 		o_p_x = player_fish.p_x;
@@ -110,19 +129,55 @@ public class MainFrame extends GameFrame {
 		o_y = player_fish.y;
 		
 		// 각 버튼의 상태를 검사하여 물고기에 어떤 작업을 수행해야 하는지 체크
-		boolean isLeftForceRequested;
-		boolean isRightForceRequested;
-		boolean isUpForceRequested;
-		boolean isDownForceRequested;
+		boolean isLeftForceRequested = false;
+		boolean isRightForceRequested = false;
+		boolean isUpForceRequested = false;
+		boolean isDownForceRequested = false;
 		
-		// 지난 프레임 이후로 경과된 시간 측정
-		double interval = timeStamp - timeStamp_lastFrame;
+	
 		
-		// 버튼 받기
-		isLeftForceRequested = inputs.buttons[0].IsPressedNow();
-		isRightForceRequested = inputs.buttons[1].IsPressedNow();
-		isUpForceRequested = inputs.buttons[2].IsPressedNow();
-		isDownForceRequested = inputs.buttons[3].IsPressedNow();
+		
+		/*
+		 * 
+		 *  TODO 
+		 *  키 입력을 어떻게 받을지에 따라 두 가지 방식으로 나뉜다.
+		 *  UX가 다르니깐 의견 받아볼 것. 
+		 *  1. 일정 시간마다 한 번씩 입력 받는 용
+		 *  2. 꾹 누르는 입력 받는 용
+		 *  
+		 */
+        // 1. 일정 시간마다 한 번씩 입력 받는 용
+//		if(canInput == true) {
+//			// 버튼 받기
+//			isLeftForceRequested = inputs.buttons[0].IsPressedNow();
+//			isRightForceRequested = inputs.buttons[1].IsPressedNow();
+//			isUpForceRequested = inputs.buttons[2].IsPressedNow();
+//			isDownForceRequested = inputs.buttons[3].IsPressedNow();			
+//			
+//			if(isLeftForceRequested == true || isRightForceRequested == true || isUpForceRequested == true || isDownForceRequested == true)
+//				canInput = false;
+//		}
+//		if(interval_input >= 200) {
+//			canInput = true;
+//			timeStamp_input = timeStamp;
+//		}
+
+		
+		// 2. 꾹 누르는 입력 받는 용
+		if(inputs.buttons[0].IsPressedNow() == true || (inputs.buttons[0].isPressed == true && inputs.buttons[0].isChanged == false)) {
+			isLeftForceRequested = true;
+		}
+		if(inputs.buttons[1].IsPressedNow() == true || (inputs.buttons[1].isPressed == true && inputs.buttons[1].isChanged == false)) {
+			isRightForceRequested = true;
+		}
+		if(inputs.buttons[2].IsPressedNow() == true || (inputs.buttons[2].isPressed == true && inputs.buttons[2].isChanged == false)) {
+			isUpForceRequested = true;
+		}
+		if(inputs.buttons[3].IsPressedNow() == true || (inputs.buttons[3].isPressed == true && inputs.buttons[3].isChanged == false)) {
+			isDownForceRequested = true;
+		}
+		
+		
 		
 		// 충돌테스트
 		if(timeStamp - timeStamp_collision >= 10) {
@@ -135,21 +190,24 @@ public class MainFrame extends GameFrame {
 			}
 			timeStamp_collision = timeStamp;
 		}
+		
+		
 		/*
 		 * 테스트용 돌아다니는 버전
 		 */
 		if(isLeftForceRequested == true) {
-			player_fish.v_x = -0.3;
+			player_fish.v_x += -x_axis;
 		}
 		if(isRightForceRequested == true) {
-			player_fish.v_x = 0.3;
+			player_fish.v_x += x_axis;
 		}
 		if(isDownForceRequested == true) {
-			player_fish.v_y = 0.3;
+			player_fish.v_y += y_axis;
 		}
 		if(isUpForceRequested == true) {
-			player_fish.v_y = -0.3;
-		}
+			player_fish.v_y += -y_axis;
+		}	
+		
 		
 		/*
 		 *  기존 구현
@@ -163,10 +221,26 @@ public class MainFrame extends GameFrame {
 //			player_fish.v_y = -0.3;
 //		}
 
+
 		// 속도 제한
-//		player_fish.v_x %= 1;
-//		player_fish.v_y %= 1;
-//		
+		if(Math.abs(player_fish.v_x) >= speed_limit) {
+			double over = Math.abs(player_fish.v_x) - speed_limit;
+			if(player_fish.v_x >= 0)
+				player_fish.v_x -= over;
+			else
+				player_fish.v_x += over;
+		}
+		if(Math.abs(player_fish.v_y) >= speed_limit) {
+			double over = Math.abs(player_fish.v_y) - speed_limit;
+			if(player_fish.v_y >= 0)
+				player_fish.v_y -= over;
+			else
+				player_fish.v_y += over;
+		}
+		
+		player_fish.v_x %= 1;
+		player_fish.v_y %= 1;
+		
 		// 마찰력 계산
 		player_fish.a_x = coef_friction_x * interval * player_fish.v_x;
 		player_fish.a_y = coef_friction_y * interval * player_fish.v_y;
