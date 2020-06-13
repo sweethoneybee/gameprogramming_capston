@@ -1,4 +1,5 @@
 
+import java.awt.Image;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -17,7 +18,9 @@ public class MainFrame extends GameFrame {
 	static final int eats_height = 100;
 	static final int player_width = 80; // 가로 : 세로 = 2 : 1 유지
 	static final int player_height = 40;
-	
+
+	// 물고리 꼬리치는 최저 속도용 상수
+	static final double img_change_speed_min = 0.08;
 	// 속도용 상수 - 일정 시간마다 한 번씩 입력 받는 용
 //	static final double speed_limit = 0.4;					// 최대 속도
 //	static final double x_axis = 0.2;						// 플레이어 x축 이동 속도
@@ -26,9 +29,9 @@ public class MainFrame extends GameFrame {
 //	static final double coef_friction_y = -0.0015;			//마찰력을 적용하기 위한 계수(속도에 이 값을 곱한 만큼이 마찰력이 됨. 따라서 이 값은 음수여야 함. 마찰력의 단위는 픽셀/ms^2)
 
 	// 속도용 상수 - 꾹 누르는 입력 받는 용
-	static final double speed_limit = 0.2;					// 최대 속도
-	static final double x_axis = 0.004;						// 플레이어 x축 이동 속도
-	static final double y_axis = 0.004;						// 플레이어 y축 이동 속도
+	static final double speed_limit = 0.6;					// 최대 속도
+	static final double x_axis = 0.006;						// 플레이어 x축 이동 속도
+	static final double y_axis = 0.006;						// 플레이어 y축 이동 속도
 	static final double coef_friction_x = -0.001;			//마찰력을 적용하기 위한 계수(속도에 이 값을 곱한 만큼이 마찰력이 됨. 따라서 이 값은 음수여야 함. 마찰력의 단위는 픽셀/ms^2)
 	static final double coef_friction_y = -0.001;			//마찰력을 적용하기 위한 계수(속도에 이 값을 곱한 만큼이 마찰력이 됨. 따라서 이 값은 음수여야 함. 마찰력의 단위는 픽셀/ms^2)
 	
@@ -45,12 +48,24 @@ public class MainFrame extends GameFrame {
 		public double a_x;
 		public double a_y;
 		
+		
+		// 헤엄치는 이미지
+		public Image image_idle;
+		public Image image_swimUp;
+		public Image image_swimDown;
+		public int image_change;
+		
 		public Player(int x, int y)
 		{
 			super(x, y,	player_width, player_height, images.GetImage("img_fish"));
 			
 			p_x = x;
 			p_y = y;
+			
+			image_idle = images.GetImage("img_fish");
+			image_swimUp = images.GetImage("img_swimUp");
+			image_swimDown = images.GetImage("img_swimDown");
+			image_change = 1;
 		}
 	}
 	
@@ -70,6 +85,7 @@ public class MainFrame extends GameFrame {
 	long timeStamp_lastFrame = 0;							//직전 프레임의 timeStamp -> 물리량 계산에 사용
 	long timeStamp_collision = 0;							// collision을 위한 timeStamp
 	long timeStamp_input = 0;								// 시간 당 input 횟수 제한을 위한 timeStamp
+	long timeStamp_imgChange = 0;							// 물고기 꼬리 이미지 변경용
 	int move_x;
 	int move_y;
 	
@@ -89,7 +105,10 @@ public class MainFrame extends GameFrame {
 		
 		
 		images.LoadImage("Images/고등어.png", "img_fish");
+		images.LoadImage("Images/고등어_위로.png", "img_swimUp");
+		images.LoadImage("Images/고등어_아래로.png", "img_swimDown");
 		images.LoadImage("Images/새우.png", "img_shrimp");
+		
 		audios.LoadAudio("Audios/01_오프닝 겸 기본 플레이 브금.wav", "main_bgm", 1);
 		
 	}
@@ -121,6 +140,8 @@ public class MainFrame extends GameFrame {
 		// 지난 프레임 이후로 경과된 시간 측정
 		double interval = timeStamp - timeStamp_lastFrame;
 		double interval_input = timeStamp - timeStamp_input;
+		double interval_swim = timeStamp - timeStamp_imgChange;
+		
 		double o_p_x, o_p_y;
 		int o_x, o_y;
 		o_p_x = player_fish.p_x;
@@ -208,7 +229,6 @@ public class MainFrame extends GameFrame {
 			player_fish.v_y += -y_axis;
 		}	
 		
-		
 		/*
 		 *  기존 구현
 		 */
@@ -274,6 +294,22 @@ public class MainFrame extends GameFrame {
 		
 		// 이제 '직전 프레임'이 될 이번 프레임의 시작 시간 기록
 		timeStamp_lastFrame = timeStamp;
+		
+		
+		// 물고기 꼬리 움직이는 용
+		if(Math.abs(player_fish.v_x) >= img_change_speed_min || Math.abs(player_fish.v_y) >= img_change_speed_min) {
+			if(interval_swim >= 500) {
+				if(player_fish.image_change == 1)
+					player_fish.image = player_fish.image_swimUp;
+				else
+					player_fish.image = player_fish.image_swimDown;
+				player_fish.image_change = -(player_fish.image_change);
+				timeStamp_imgChange = timeStamp;
+			}
+		}
+		else {
+			player_fish.image = player_fish.image_idle;			
+		}
 		
 		// 원래는 반환값을 false, true를 구분하는 것이 중요한데 
 		// 우리는 간단한 게임이니 일단 true로 해둠
