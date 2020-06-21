@@ -38,6 +38,8 @@ public class MainFrame extends GameFrame {
 	// 키입력 횟수 제한 용
 	static boolean canInput = true;
 	
+	// 새우 위치 랜덤 생성용
+	Random rand;
 	//DrawableObject player_fish;
 	public class Player extends DrawableObject
 	{
@@ -50,10 +52,12 @@ public class MainFrame extends GameFrame {
 		
 		
 		// 헤엄치는 이미지
+		public Image[][] player_images;
 		public Image image_idle;
 		public Image image_swimUp;
 		public Image image_swimDown;
-		public int image_change;
+		public int image_change_up_down;
+		public int image_change_right_left;
 		
 		public Player(int x, int y)
 		{
@@ -62,10 +66,20 @@ public class MainFrame extends GameFrame {
 			p_x = x;
 			p_y = y;
 			
-			image_idle = images.GetImage("img_fish");
-			image_swimUp = images.GetImage("img_swimUp");
-			image_swimDown = images.GetImage("img_swimDown");
-			image_change = 1;
+			player_images = new Image[2][3];
+			player_images[0] = new Image[3];
+			player_images[1] = new Image[3];
+			
+			player_images[0][0] = images.GetImage("img_right_fish_idle");
+			player_images[0][1] = images.GetImage("img_right_swimUp");
+			player_images[0][2] = images.GetImage("img_right_swimDown");
+			
+			player_images[1][0] = images.GetImage("img_left_fish_idle");
+			player_images[1][1] = images.GetImage("img_left_swimUp");
+			player_images[1][2] = images.GetImage("img_left_swimDown");
+			
+			image_change_up_down = 1;
+			image_change_right_left = 0;
 		}
 	}
 	
@@ -103,10 +117,15 @@ public class MainFrame extends GameFrame {
 		inputs.BindKey(KeyEvent.VK_UP, 2);
 		inputs.BindKey(KeyEvent.VK_DOWN, 3);
 		
+
+		images.LoadImage("Images/고등어_오른쪽.png", "img_right_fish_idle");
+		images.LoadImage("Images/고등어_오른쪽_위로.png", "img_right_swimUp");
+		images.LoadImage("Images/고등어_오른쪽_아래로.png", "img_right_swimDown");
+
+		images.LoadImage("Images/고등어_왼쪽.png", "img_left_fish_idle");
+		images.LoadImage("Images/고등어_왼쪽_위로.png", "img_left_swimUp");
+		images.LoadImage("Images/고등어_왼쪽_아래로.png", "img_left_swimDown");
 		
-		images.LoadImage("Images/고등어.png", "img_fish");
-		images.LoadImage("Images/고등어_위로.png", "img_swimUp");
-		images.LoadImage("Images/고등어_아래로.png", "img_swimDown");
 		images.LoadImage("Images/새우.png", "img_shrimp");
 		
 		audios.LoadAudio("Audios/01_오프닝 겸 기본 플레이 브금.wav", "main_bgm", 1);
@@ -115,7 +134,7 @@ public class MainFrame extends GameFrame {
 
 	@Override
 	public boolean Initialize() {		
-		Random rand = new Random();
+		rand = new Random();
 		
 		// 불러온 이미지륿 필드에 할당해주기
 		//player_fish = new DrawableObject((800-329) / 2, (600 - 329) / 2, 329, 329, images.GetImage("img_fish"));
@@ -206,6 +225,7 @@ public class MainFrame extends GameFrame {
 				if(player_fish.CollisionTest(eat) == true) {
 					eats.remove(eat);
 					timeStamp_collision = timeStamp;
+					eats.add(new Eats(rand.nextInt(settings.canvas_width - eats_width - 10) + 100, rand.nextInt(settings.canvas_height - eats_height - 10) + 1));
 					break;
 				}
 			}
@@ -258,8 +278,9 @@ public class MainFrame extends GameFrame {
 				player_fish.v_y += over;
 		}
 		
-		player_fish.v_x %= 1;
-		player_fish.v_y %= 1;
+
+//		player_fish.v_x %= 1;
+//		player_fish.v_y %= 1;
 		
 		// 마찰력 계산
 		player_fish.a_x = coef_friction_x * interval * player_fish.v_x;
@@ -297,18 +318,26 @@ public class MainFrame extends GameFrame {
 		
 		
 		// 물고기 꼬리 움직이는 용
+		if(player_fish.image_change_right_left == 0 && player_fish.v_x < 0)
+			player_fish.image_change_right_left = 1;
+		else if(player_fish.image_change_right_left == 1 && player_fish.v_x > 0)
+			player_fish.image_change_right_left = 0;
+		
 		if(Math.abs(player_fish.v_x) >= img_change_speed_min || Math.abs(player_fish.v_y) >= img_change_speed_min) {
 			if(interval_swim >= 500) {
-				if(player_fish.image_change == 1)
-					player_fish.image = player_fish.image_swimUp;
-				else
-					player_fish.image = player_fish.image_swimDown;
-				player_fish.image_change = -(player_fish.image_change);
+				if(player_fish.image_change_up_down == 1) {
+					player_fish.image = player_fish.player_images[player_fish.image_change_right_left][player_fish.image_change_up_down];
+					player_fish.image_change_up_down = 2;
+				}
+				else {
+					player_fish.image = player_fish.player_images[player_fish.image_change_right_left][player_fish.image_change_up_down];
+					player_fish.image_change_up_down = 1;					
+				}
 				timeStamp_imgChange = timeStamp;
 			}
 		}
 		else {
-			player_fish.image = player_fish.image_idle;			
+			player_fish.image = player_fish.player_images[player_fish.image_change_right_left][0];
 		}
 		
 		// 원래는 반환값을 false, true를 구분하는 것이 중요한데 
