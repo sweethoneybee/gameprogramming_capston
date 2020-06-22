@@ -640,9 +640,9 @@ public class MainFrame extends GameFrame {
 			
 			int firstSeconds = (int)timeStamp_lastFrame / 1000;
 			int secondSeconds = (int)timeStamp_lastFrame % 1000 / 100;
-			DrawString(settings.canvas_width / 2 - 100, 30, "연어가 버틴 시간: %d.%d초", firstSeconds, secondSeconds);
-			DrawString(settings.canvas_width / 2 - 100, 50, "연어가 먹은 새우:  %d 마리", player_fish.eatCount);
-			DrawString(settings.canvas_width / 2 - 100, 70, "연어의 체력: %.0f", hp.hp);
+			DrawString(settings.canvas_width / 2 - 100, 30, "참치가 버틴 시간: %d.%d초", firstSeconds, secondSeconds);
+			DrawString(settings.canvas_width / 2 - 100, 50, "참치가 먹은 새우:  %d 마리", player_fish.eatCount);
+			DrawString(settings.canvas_width / 2 - 100, 70, "참치의 체력: %.0f", hp.hp);
 			//DrawString(player_fish.x, player_fish.y + 45, "연어의 체력: %.0f", player_fish.hp);
 		
 			// 게임오버 화면 그리기
