@@ -16,6 +16,11 @@ public class MainFrame extends GameFrame {
 	// 게임 중인지 확인
 	static int gameScene = 0; // 0: 시작, 1: 게임 중, 2: 게임오버
 	
+	// 게임 시작, 엔딩 이미지용
+	static final int title_width = 700;
+	static final int title_height = 700;
+	static final int title_text_width = 500;
+	static final int title_text_height = 100;
 	// 새우 먹는 소리 관련 상수
 	static final int number_of_eat_sounds = 7;			// 최대 동시 재생 상수
 	static final long interval_play_ms = 0;			// 재생 간 간격 상수
@@ -70,6 +75,31 @@ public class MainFrame extends GameFrame {
 	
 	// 새우 위치 랜덤 생성용
 	Random rand;
+	
+	// 게임시작, 엔딩용 오브젝트
+	public class TitleImage extends DrawableObject {
+		public double p_x;
+		public double p_y;
+		
+		public Image gamestart;
+		public Image gameover;
+		
+		public TitleImage(String img_name) {
+			super(settings.canvas_width / 4, 50, title_width, title_height, images.GetImage(img_name));
+			p_x = x;
+			p_y = y;
+		}
+	}
+	public class TitleText extends DrawableObject {
+		public double p_x;
+		public double p_y;
+		
+		public TitleText() {
+			super(settings.canvas_width / 4 + 100, 750, title_text_width, title_text_height, images.GetImage("img_gamestart2"));
+			p_x = x;
+			p_y = y;
+		}
+	}
 	//DrawableObject player_fish;
 	public class Hp extends DrawableObject{
 		public double p_x;
@@ -189,6 +219,9 @@ public class MainFrame extends GameFrame {
 		}
 		
 	}
+	TitleImage title;										// 게임 타이틀
+	TitleImage title_over;									// 게임 엔딩
+	TitleText title_text;									// 게임 타이틀 텍스트
 	Hp hp;													// 체력바
 	Player player_fish;										// 플레이어 물고기
 	ArrayList<Eats> eats = new ArrayList<Eats>();			// 먹이
@@ -220,6 +253,7 @@ public class MainFrame extends GameFrame {
 		inputs.BindKey(KeyEvent.VK_RIGHT, 1);
 		inputs.BindKey(KeyEvent.VK_UP, 2);
 		inputs.BindKey(KeyEvent.VK_DOWN, 3);
+		inputs.BindKey(KeyEvent.VK_SPACE, 4);
 		
 
 		images.LoadImage("Images/고등어_오른쪽.png", "img_right_fish_idle");
@@ -236,7 +270,12 @@ public class MainFrame extends GameFrame {
 		images.LoadImage("Images/성게.png", "img_block");
 		images.LoadImage("Images/성게_흐릿.png", "img_block_blur");
 		
+		images.LoadImage("Images/게임시작이미지_1.png", "img_gamestart1");
+		images.LoadImage("Images/게임시작이미지_2.png", "img_gamestart2");
+		images.LoadImage("Images/게임오버_이미지.png", "img_gameover");
+		
 		audios.LoadAudio("Audios/01_오프닝 겸 기본 플레이 브금.wav", "main_bgm", 1);
+		audios.LoadAudio("Audios/02_스피드 업(새우).wav", "gameplay_bgm", 1);
 		audios.LoadAudio("Audios/05_새우먹는소리2.wav", "eat_sound", number_of_eat_sounds);
 		audios.LoadAudio("Audios/03_게임오버.wav", "gameover_bgm", 1);
 	}
@@ -268,7 +307,10 @@ public class MainFrame extends GameFrame {
 		// 게임 스타트 조건 추가
 		player_fish.isDead = false;
 		
-		
+		// 게임 시작, 엔딩용 이미지 초기화
+		title = new TitleImage("img_gamestart1");
+		title_over = new TitleImage("img_gameover");
+		title_text = new TitleText();
 		// 재시작용
 //		numberOfEats = 0;
 //		max_numberOfEats = 5;
@@ -289,11 +331,20 @@ public class MainFrame extends GameFrame {
 	@Override
 	public boolean Update(long timeStamp) {
 		
+		boolean isSpacePressed = inputs.buttons[4].IsPressedNow();
+		if(gameScene == 0) {
+			if(isSpacePressed == true) {
+				gameScene = 1;				
+				audios.Stop("main_bgm");
+				audios.Loop("gameplay_bgm", -1);
+			}
+		}
 		// 게임오버 여부 확인
 		if(player_fish.isDead == true) {
 			if(isPlayedGameover == false) {
 				isPlayedGameover = true;
-				audios.Stop("main_bgm");
+				gameScene = 2;
+				audios.Stop("gameplay_bgm");
 				audios.Loop("gameover_bgm", -1);
 			}
 			return true;
@@ -574,7 +625,8 @@ public class MainFrame extends GameFrame {
 		// 게임시작화면
 		if(gameScene == 0) {
 			// testcode
-			gameScene = 1;
+			title.Draw(g);
+			title_text.Draw(g);
 		}
 		// 게임 중 화면
 		else if(gameScene == 1 || gameScene == 2) {
@@ -593,8 +645,9 @@ public class MainFrame extends GameFrame {
 			DrawString(settings.canvas_width / 2 - 100, 70, "연어의 체력: %.0f", hp.hp);
 			//DrawString(player_fish.x, player_fish.y + 45, "연어의 체력: %.0f", player_fish.hp);
 		
+			// 게임오버 화면 그리기
 			if(gameScene == 2) {
-				// 게임오버 화면 그리기
+				title_over.Draw(g);
 			}
 		}
 		
