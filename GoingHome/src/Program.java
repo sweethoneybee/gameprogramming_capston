@@ -15,8 +15,10 @@ public class Program {
 		// backgroundColor = 시안-파랑의 약간 밝은 색조
 		settings.canvas_backgroundColor = new Color(0x40a0ff);
 		
-		settings.canvas_width = 1024;
-		settings.canvas_height = 768;
+		//settings.canvas_width = 1024;
+		//settings.canvas_height = 768;
+		settings.canvas_width = 1600;
+		settings.canvas_height = 900;
 		
 		// mainFrame 초기환
 		MainFrame mainFrame = new MainFrame(settings);

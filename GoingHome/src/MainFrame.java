@@ -16,20 +16,31 @@ public class MainFrame extends GameFrame {
 	// 게임 중인지 확인
 	static int gameScene = 0; // 0: 시작, 1: 게임 중, 2: 게임오버
 	
+	// 새우 먹는 소리 관련 상수
+	static final int number_of_eat_sounds = 7;			// 최대 동시 재생 상수
+	static final long interval_play_ms = 0;			// 재생 간 간격 상수
 	// 체력 관련 상수
 	static int hp_minus = 1;
 	static int hp_plus = 15;
 	
+	// 장애물 관련 상수
+	static int numberOfBlocks = 0;
+	static int max_numberOfBlocks = 3;
+	static final int block_width = 30;
+	static final int block_height = 30;
+	static final int block_upgrade_interval = 10000;
+	static boolean nowCheck = false;
+	
 	// 새우 상수 - 개수, 크기
 	static int numberOfEats = 0;
 	static int max_numberOfEats = 5;
-	static final int eats_width = 40;
-	static final int eats_height = 40;
+	static final int eats_width = 60;
+	static final int eats_height = 60;
 	static int eats_add_interval = 1000;
 	
 	// 플레이어 물고기 크기 상수
-	static final int player_width = 70; // 가로 : 세로 = 2 : 1 유지
-	static final int player_height = 35;
+	static final int player_width = 120; // 가로 : 세로 = 2 : 1 유지
+	static final int player_height = 60;
 
 	// 체력바 상수
 	static final int hp_width = 100;
@@ -38,21 +49,24 @@ public class MainFrame extends GameFrame {
 	// 물고리 꼬리치는 최저 속도용 상수
 	static final double img_change_speed_min = 0.08;
 	// 속도용 상수 - 일정 시간마다 한 번씩 입력 받는 용
-//	static final double speed_limit = 0.4;					// 최대 속도
-//	static final double x_axis = 0.2;						// 플레이어 x축 이동 속도
-//	static final double y_axis = 0.2;						// 플레이어 y축 이동 속도
-//	static final double coef_friction_x = -0.0015;			//마찰력을 적용하기 위한 계수(속도에 이 값을 곱한 만큼이 마찰력이 됨. 따라서 이 값은 음수여야 함. 마찰력의 단위는 픽셀/ms^2)
-//	static final double coef_friction_y = -0.0015;			//마찰력을 적용하기 위한 계수(속도에 이 값을 곱한 만큼이 마찰력이 됨. 따라서 이 값은 음수여야 함. 마찰력의 단위는 픽셀/ms^2)
+	static final double speed_limit = 3;					// 최대 속도 // 0.4가 원본 
+	static final double x_axis = 0.5;						// 플레이어 x축 이동 속도
+	static final double y_axis = 0.5;						// 플레이어 y축 이동 속도
+	static final double coef_friction_x = -0.0015;			//마찰력을 적용하기 위한 계수(속도에 이 값을 곱한 만큼이 마찰력이 됨. 따라서 이 값은 음수여야 함. 마찰력의 단위는 픽셀/ms^2)
+	static final double coef_friction_y = -0.0015;			//마찰력을 적용하기 위한 계수(속도에 이 값을 곱한 만큼이 마찰력이 됨. 따라서 이 값은 음수여야 함. 마찰력의 단위는 픽셀/ms^2)
 
 	// 속도용 상수 - 꾹 누르는 입력 받는 용
-	static final double speed_limit = 0.9;					// 최대 속도
-	static final double x_axis = 0.01;						// 플레이어 x축 이동 속도
-	static final double y_axis = 0.01;						// 플레이어 y축 이동 속도
-	static final double coef_friction_x = -0.0001;			//마찰력을 적용하기 위한 계수(속도에 이 값을 곱한 만큼이 마찰력이 됨. 따라서 이 값은 음수여야 함. 마찰력의 단위는 픽셀/ms^2)
-	static final double coef_friction_y = -0.0001;			//마찰력을 적용하기 위한 계수(속도에 이 값을 곱한 만큼이 마찰력이 됨. 따라서 이 값은 음수여야 함. 마찰력의 단위는 픽셀/ms^2)
+//	static final double speed_limit = 0.9;					// 최대 속도
+//	static final double x_axis = 0.01;						// 플레이어 x축 이동 속도
+//	static final double y_axis = 0.01;						// 플레이어 y축 이동 속도
+//	static final double coef_friction_x = -0.0001;			//마찰력을 적용하기 위한 계수(속도에 이 값을 곱한 만큼이 마찰력이 됨. 따라서 이 값은 음수여야 함. 마찰력의 단위는 픽셀/ms^2)
+//	static final double coef_friction_y = -0.0001;			//마찰력을 적용하기 위한 계수(속도에 이 값을 곱한 만큼이 마찰력이 됨. 따라서 이 값은 음수여야 함. 마찰력의 단위는 픽셀/ms^2)
 	
 	// 키입력 횟수 제한 용
 	static boolean canInput = true;
+	
+	// 엔딩음악 제셍용 
+	static boolean isPlayedGameover = false;
 	
 	// 새우 위치 랜덤 생성용
 	Random rand;
@@ -154,9 +168,31 @@ public class MainFrame extends GameFrame {
 			p_y = y;
 		}
 	}
+	
+	public class Block extends DrawableObject{
+		public double p_x;
+		public double p_y;
+		public Image idle_img;
+		public Image idle_blur_img;
+		
+		public Block(int x, int y) {
+			super(x, y, eats_width, eats_height, images.GetImage("img_block_blur"));
+			
+			idle_img = images.GetImage("img_block");
+			idle_blur_img = images.GetImage("img_block_blur");
+			p_x = x;
+			p_y = y;
+		}
+		
+		public void changeImg() {
+			this.image = this.idle_img;
+		}
+		
+	}
 	Hp hp;													// 체력바
 	Player player_fish;										// 플레이어 물고기
 	ArrayList<Eats> eats = new ArrayList<Eats>();			// 먹이
+	ArrayList<Block> blocks = new ArrayList<Block>();		// 장애물
 	long timeStamp_eatAdd = 1;								// 먹이 생성 시간 간격
 	long timeStamp_lastFrame = 0;							//직전 프레임의 timeStamp -> 물리량 계산에 사용
 	long timeStamp_collision = 0;							// collision을 위한 timeStamp
@@ -164,6 +200,9 @@ public class MainFrame extends GameFrame {
 	long timeStamp_imgChange = 0;							// 물고기 꼬리 이미지 변경용
 	long timeStamp_hp = 0;									// 물고기 hp 까는 용도
 	long timeStamp_difficulty = 0;							// 난이도 조절용
+	
+	long timeStamp_lastPlayed = 0;							// 재생 호출 간격 용
+	long timeStamp_block = 0;								// 장애물 생성 용
 	
 	int move_x;
 	int move_y;
@@ -194,9 +233,12 @@ public class MainFrame extends GameFrame {
 		images.LoadImage("images/체력바.png", "img_hp");
 		
 		images.LoadImage("Images/새우.png", "img_shrimp");
+		images.LoadImage("Images/성게.png", "img_block");
+		images.LoadImage("Images/성게_흐릿.png", "img_block_blur");
 		
 		audios.LoadAudio("Audios/01_오프닝 겸 기본 플레이 브금.wav", "main_bgm", 1);
-		
+		audios.LoadAudio("Audios/05_새우먹는소리2.wav", "eat_sound", number_of_eat_sounds);
+		audios.LoadAudio("Audios/03_게임오버.wav", "gameover_bgm", 1);
 	}
 
 	@Override
@@ -216,6 +258,7 @@ public class MainFrame extends GameFrame {
 //		for(int iEats = 0; iEats < numberOfEats; iEats++)
 //			eats.add(new Eats(rand.nextInt(settings.canvas_width - eats_width - 10) + 100, rand.nextInt(settings.canvas_height - eats_height - 10) + 1));
 		
+		
 		// 먹을 것 하나만 고정 추가
 		eats.add(new Eats(800, 600));
 		
@@ -225,6 +268,21 @@ public class MainFrame extends GameFrame {
 		// 게임 스타트 조건 추가
 		player_fish.isDead = false;
 		
+		
+		// 재시작용
+//		numberOfEats = 0;
+//		max_numberOfEats = 5;
+//		eats_add_interval = 1000;
+//		gameScene = 0; // 0: 시작, 1: 게임 중, 2: 게임오버
+//		hp_minus = 1;
+//		hp_plus = 15;
+//		timeStamp_eatAdd = 1;								// 먹이 생성 시간 간격
+//		timeStamp_lastFrame = 0;							//직전 프레임의 timeStamp -> 물리량 계산에 사용
+//		timeStamp_collision = 0;							// collision을 위한 timeStamp
+//		timeStamp_input = 0;								// 시간 당 input 횟수 제한을 위한 timeStamp
+//		timeStamp_imgChange = 0;							// 물고기 꼬리 이미지 변경용
+//		timeStamp_hp = 0;									// 물고기 hp 까는 용도
+//		timeStamp_difficulty = 0;							// 난이도 조절용
 		return true;
 	}
 
@@ -232,9 +290,15 @@ public class MainFrame extends GameFrame {
 	public boolean Update(long timeStamp) {
 		
 		// 게임오버 여부 확인
-		if(player_fish.isDead == true)
+		if(player_fish.isDead == true) {
+			if(isPlayedGameover == false) {
+				isPlayedGameover = true;
+				audios.Stop("main_bgm");
+				audios.Loop("gameover_bgm", -1);
+			}
 			return true;
-//		
+		}
+		
 		// 시간 지날수록 난이도 상승
 		if(timeStamp - timeStamp_difficulty >= 7000) {
 			if((hp_minus += 1) >= 5)
@@ -271,6 +335,26 @@ public class MainFrame extends GameFrame {
 			}
 		}
 		
+		// 장애물 추가
+		if(timeStamp - timeStamp_block > block_upgrade_interval) {
+			timeStamp_block = timeStamp;
+			nowCheck = false;
+			if(numberOfBlocks <= max_numberOfBlocks) {
+				if(numberOfBlocks != max_numberOfBlocks)
+					numberOfBlocks += 1;
+				blocks.clear();
+				for(int iBlocks = 0; iBlocks < numberOfBlocks; iBlocks++)
+					blocks.add(new Block(rand.nextInt(settings.canvas_width - block_width - 200) + 100, rand.nextInt(settings.canvas_height - block_height - 200) + 100));
+			}
+		}
+		// 장애물 진하고 이제 충돌 가능
+		if(blocks.isEmpty() != true && nowCheck == false && (timeStamp - timeStamp_block > 1000)) {
+			nowCheck = true;
+			for(Block block : blocks) {
+				block.changeImg();
+				block.image = block.idle_img;
+			}
+		}
 		// 각 버튼의 상태를 검사하여 물고기에 어떤 작업을 수행해야 하는지 체크
 		boolean isLeftForceRequested = false;
 		boolean isRightForceRequested = false;
@@ -290,16 +374,16 @@ public class MainFrame extends GameFrame {
 		 *  
 		 */
         // 1. 일정 시간마다 한 번씩 입력 받는 용
-//		if(canInput == true) {
-//			// 버튼 받기
-//			isLeftForceRequested = inputs.buttons[0].IsPressedNow();
-//			isRightForceRequested = inputs.buttons[1].IsPressedNow();
-//			isUpForceRequested = inputs.buttons[2].IsPressedNow();
-//			isDownForceRequested = inputs.buttons[3].IsPressedNow();			
-//			
+		if(canInput == true) {
+			// 버튼 받기
+			isLeftForceRequested = inputs.buttons[0].IsPressedNow();
+			isRightForceRequested = inputs.buttons[1].IsPressedNow();
+			isUpForceRequested = inputs.buttons[2].IsPressedNow();
+			isDownForceRequested = inputs.buttons[3].IsPressedNow();			
+			
 //			if(isLeftForceRequested == true || isRightForceRequested == true || isUpForceRequested == true || isDownForceRequested == true)
 //				canInput = false;
-//		}
+		}
 //		if(interval_input >= 200) {
 //			canInput = true;
 //			timeStamp_input = timeStamp;
@@ -307,18 +391,18 @@ public class MainFrame extends GameFrame {
 
 		
 		// 2. 꾹 누르는 입력 받는 용
-		if(inputs.buttons[0].IsPressedNow() == true || (inputs.buttons[0].isPressed == true && inputs.buttons[0].isChanged == false)) {
-			isLeftForceRequested = true;
-		}
-		if(inputs.buttons[1].IsPressedNow() == true || (inputs.buttons[1].isPressed == true && inputs.buttons[1].isChanged == false)) {
-			isRightForceRequested = true;
-		}
-		if(inputs.buttons[2].IsPressedNow() == true || (inputs.buttons[2].isPressed == true && inputs.buttons[2].isChanged == false)) {
-			isUpForceRequested = true;
-		}
-		if(inputs.buttons[3].IsPressedNow() == true || (inputs.buttons[3].isPressed == true && inputs.buttons[3].isChanged == false)) {
-			isDownForceRequested = true;
-		}
+//		if(inputs.buttons[0].IsPressedNow() == true || (inputs.buttons[0].isPressed == true && inputs.buttons[0].isChanged == false)) {
+//			isLeftForceRequested = true;
+//		}
+//		if(inputs.buttons[1].IsPressedNow() == true || (inputs.buttons[1].isPressed == true && inputs.buttons[1].isChanged == false)) {
+//			isRightForceRequested = true;
+//		}
+//		if(inputs.buttons[2].IsPressedNow() == true || (inputs.buttons[2].isPressed == true && inputs.buttons[2].isChanged == false)) {
+//			isUpForceRequested = true;
+//		}
+//		if(inputs.buttons[3].IsPressedNow() == true || (inputs.buttons[3].isPressed == true && inputs.buttons[3].isChanged == false)) {
+//			isDownForceRequested = true;
+//		}
 		
 		
 		
@@ -332,8 +416,22 @@ public class MainFrame extends GameFrame {
 					player_fish.eatCount++;
 					numberOfEats--;
 					hp.getPlus(hp_plus);
+					
+					// 소리 재생
+					if(timeStamp - timeStamp_lastPlayed > interval_play_ms) {
+						timeStamp_lastPlayed = timeStamp;
+						audios.Play("eat_sound");						
+					}
 					break;
 				}
+			}
+			if(nowCheck == true) {
+				for(Block block : blocks) {
+					if(player_fish.CollisionTest(block) == true) {
+						player_fish.isDead = true;
+						break;
+					}
+				}				
 			}
 			timeStamp_collision = timeStamp;
 		}
@@ -485,6 +583,8 @@ public class MainFrame extends GameFrame {
 			hp.Draw(g);
 			for(VisualObject eat : eats)
 				eat.Draw(g);
+			for(VisualObject block : blocks)
+				block.Draw(g);
 			
 			int firstSeconds = (int)timeStamp_lastFrame / 1000;
 			int secondSeconds = (int)timeStamp_lastFrame % 1000 / 100;
