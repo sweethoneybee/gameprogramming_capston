@@ -17,10 +17,10 @@ public class MainFrame extends GameFrame {
 	static int gameScene = 0; // 0: 시작, 1: 게임 중, 2: 게임오버
 	
 	// 게임 시작, 엔딩 이미지용
-	static final int title_width = 700;
-	static final int title_height = 700;
-	static final int title_text_width = 500;
-	static final int title_text_height = 100;
+	static final int title_width = 1600;
+	static final int title_height = 900;
+	static final int title_text_width = 1600;
+	static final int title_text_height = 900;
 	// 새우 먹는 소리 관련 상수
 	static final int number_of_eat_sounds = 7;			// 최대 동시 재생 상수
 	static final long interval_play_ms = 0;			// 재생 간 간격 상수
@@ -85,7 +85,7 @@ public class MainFrame extends GameFrame {
 		public Image gameover;
 		
 		public TitleImage(String img_name) {
-			super(settings.canvas_width / 4, 50, title_width, title_height, images.GetImage(img_name));
+			super(settings.canvas_width / 999999999, 0, title_width, title_height, images.GetImage(img_name));
 			p_x = x;
 			p_y = y;
 		}
@@ -95,7 +95,7 @@ public class MainFrame extends GameFrame {
 		public double p_y;
 		
 		public TitleText() {
-			super(settings.canvas_width / 4 + 100, 750, title_text_width, title_text_height, images.GetImage("img_gamestart2"));
+			super(settings.canvas_width / 999999999, 0, title_text_width, title_text_height, images.GetImage("img_gamestart2"));
 			p_x = x;
 			p_y = y;
 		}
@@ -237,6 +237,8 @@ public class MainFrame extends GameFrame {
 	long timeStamp_lastPlayed = 0;							// 재생 호출 간격 용
 	long timeStamp_block = 0;								// 장애물 생성 용
 	
+	long start_time = 0;									// 시작시간
+	
 	int move_x;
 	int move_y;
 	
@@ -332,24 +334,72 @@ public class MainFrame extends GameFrame {
 	public boolean Update(long timeStamp) {
 		
 		boolean isSpacePressed = inputs.buttons[4].IsPressedNow();
+		// 스페이스바 누르면 재시작
+		if(gameScene == 2) {
+			if(isSpacePressed == true) {
+				gameScene = 0;			
+				
+				// 시작 텀용
+				hp_minus = 1;
+				hp_plus = 15;
+				timeStamp_eatAdd = 0;								// 먹이 생성 시간 간격
+				timeStamp_lastFrame = timeStamp;							//직전 프레임의 timeStamp -> 물리량 계산에 사용
+				timeStamp_collision = timeStamp;							// collision을 위한 timeStamp
+				timeStamp_input = timeStamp;								// 시간 당 input 횟수 제한을 위한 timeStamp
+				timeStamp_imgChange = timeStamp;							// 물고기 꼬리 이미지 변경용
+				timeStamp_hp = timeStamp;									// 물고기 hp 까는 용도
+				timeStamp_difficulty = timeStamp;							// 난이도 조절용
+				timeStamp_block = timeStamp;								// 장애물 생성 용
+				
+				hp.hp = 100;
+				hp.width = 100;
+				eats_add_interval = 1000;
+				numberOfEats = 0;
+				max_numberOfEats = 5;
+				numberOfBlocks = 0;
+				start_time = timeStamp;
+				player_fish.eatCount = 0;
+				
+				eats.clear();
+				blocks.clear();
+				
+				player_fish.isDead = false;
+				isPlayedGameover = false;
+				audios.Loop("main_bgm", -1);
+			}
+		}
 		if(gameScene == 0) {
 			if(isSpacePressed == true) {
-				gameScene = 1;				
-				audios.Stop("main_bgm");
-				audios.Loop("gameplay_bgm", -1);
+				gameScene = 1;			
+				
+				// 시작 텀용
+				hp_minus = 1;
+				hp_plus = 15;
+				timeStamp_eatAdd = 0;								// 먹이 생성 시간 간격
+				timeStamp_lastFrame = timeStamp;							//직전 프레임의 timeStamp -> 물리량 계산에 사용
+				timeStamp_collision = timeStamp;							// collision을 위한 timeStamp
+				timeStamp_input = timeStamp;								// 시간 당 input 횟수 제한을 위한 timeStamp
+				timeStamp_imgChange = timeStamp;							// 물고기 꼬리 이미지 변경용
+				timeStamp_hp = timeStamp;									// 물고기 hp 까는 용도
+				timeStamp_difficulty = timeStamp;							// 난이도 조절용
+				timeStamp_block = timeStamp;								// 장애물 생성 용
+				
+				hp.hp = 100;
+				hp.width = 100;
+				eats_add_interval = 1000;
+				numberOfEats = 0;
+				max_numberOfEats = 5;
+				numberOfBlocks = 0;
+				start_time = timeStamp;
+				player_fish.eatCount = 0;
+				
+				eats.clear();
+				blocks.clear();
+				
 			}
+			
 		}
-		// 게임오버 여부 확인
-		if(player_fish.isDead == true) {
-			if(isPlayedGameover == false) {
-				isPlayedGameover = true;
-				gameScene = 2;
-				audios.Stop("gameplay_bgm");
-				audios.Loop("gameover_bgm", -1);
-			}
-			return true;
-		}
-		
+
 		// 시간 지날수록 난이도 상승
 		if(timeStamp - timeStamp_difficulty >= 7000) {
 			if((hp_minus += 1) >= 5)
@@ -425,7 +475,7 @@ public class MainFrame extends GameFrame {
 		 *  
 		 */
         // 1. 일정 시간마다 한 번씩 입력 받는 용
-		if(canInput == true) {
+		if(canInput == true && player_fish.isDead != true) {
 			// 버튼 받기
 			isLeftForceRequested = inputs.buttons[0].IsPressedNow();
 			isRightForceRequested = inputs.buttons[1].IsPressedNow();
@@ -610,7 +660,17 @@ public class MainFrame extends GameFrame {
 		}
 		
 		
-		
+		// 게임오버 여부 확인
+		if(player_fish.isDead == true) {
+			if(isPlayedGameover == false) {
+				isPlayedGameover = true;
+				gameScene = 2;
+				audios.Stop("main_bgm");
+//				audios.Stop("gameplay_bgm");
+				audios.Play("gameover_bgm");
+			}
+			return true;
+		}
 		// 원래는 반환값을 false, true를 구분하는 것이 중요한데 
 		// 우리는 간단한 게임이니 일단 true로 해둠
 		return true;
@@ -638,8 +698,8 @@ public class MainFrame extends GameFrame {
 			for(VisualObject block : blocks)
 				block.Draw(g);
 			
-			int firstSeconds = (int)timeStamp_lastFrame / 1000;
-			int secondSeconds = (int)timeStamp_lastFrame % 1000 / 100;
+			int firstSeconds = (int)(timeStamp_lastFrame - start_time) / 1000;
+			int secondSeconds = (int)(timeStamp_lastFrame - start_time) % 1000 / 100;
 			DrawString(settings.canvas_width / 2 - 100, 30, "참치가 버틴 시간: %d.%d초", firstSeconds, secondSeconds);
 			DrawString(settings.canvas_width / 2 - 100, 50, "참치가 먹은 새우:  %d 마리", player_fish.eatCount);
 			DrawString(settings.canvas_width / 2 - 100, 70, "참치의 체력: %.0f", hp.hp);
