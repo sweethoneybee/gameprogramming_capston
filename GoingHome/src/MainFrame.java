@@ -365,6 +365,8 @@ public class MainFrame extends GameFrame {
 				
 				player_fish.isDead = false;
 				isPlayedGameover = false;
+				player_fish.v_x = 0;
+				player_fish.v_y = 0;
 				audios.Loop("main_bgm", -1);
 			}
 		}
@@ -393,6 +395,8 @@ public class MainFrame extends GameFrame {
 				start_time = timeStamp;
 				player_fish.eatCount = 0;
 				
+				player_fish.v_x = 0;
+				player_fish.v_y = 0;
 				eats.clear();
 				blocks.clear();
 				
@@ -610,12 +614,12 @@ public class MainFrame extends GameFrame {
 		if(player_fish.x <= 0 || player_fish.x >= settings.canvas_width - player_width) {
 			player_fish.x = o_x;
 			player_fish.p_x = o_p_x;
-			player_fish.v_x = -(player_fish.v_x * 2);
+			player_fish.v_x = -(player_fish.v_x * 1);
 		}
 		if(player_fish.y <= 0 || player_fish.y >= settings.canvas_height - player_height) {
 			player_fish.y = o_y;
 			player_fish.p_y = o_p_y;
-			player_fish.v_y = -(player_fish.v_y * 2);
+			player_fish.v_y = -(player_fish.v_y * 1);
 		}
 			
 		// 체력바 위치 물고기에 맞추기
