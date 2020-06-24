@@ -1,4 +1,5 @@
 
+import java.awt.Color;
 import java.awt.Image;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -13,6 +14,12 @@ import loot.graphics.VisualObject;
 
 public class MainFrame extends GameFrame {
 
+	// 게임 기록용 변수
+	static int firstSeconds = 0;
+	static int secondSeconds = 0;
+	static int end_firstTime = 0;
+	static int end_secondTime = 0;
+	static int end_eatCount = 0;
 	// 게임 중인지 확인
 	static int gameScene = 0; // 0: 시작, 1: 게임 중, 2: 게임오버
 	
@@ -21,6 +28,10 @@ public class MainFrame extends GameFrame {
 	static final int title_height = 900;
 	static final int title_text_width = 1600;
 	static final int title_text_height = 900;
+	static int ending_text_select = 0;
+	static final String ending_text_starve = new String("참치가 굶어 죽었습니다");
+	static final String ending_text_collide = new String("참치가 성게에 부딪혀 죽었습니다");
+	
 	// 새우 먹는 소리 관련 상수
 	static final int number_of_eat_sounds = 7;			// 최대 동시 재생 상수
 	static final long interval_play_ms = 0;			// 재생 간 간격 상수
@@ -286,6 +297,7 @@ public class MainFrame extends GameFrame {
 	public boolean Initialize() {		
 		rand = new Random();
 		
+		this.LoadFont("휴먼명조 25");
 		// 불러온 이미지륿 필드에 할당해주기
 		//player_fish = new DrawableObject((800-329) / 2, (600 - 329) / 2, 329, 329, images.GetImage("img_fish"));
 		player_fish = new Player(105, 100);
@@ -333,7 +345,8 @@ public class MainFrame extends GameFrame {
 	@Override
 	public boolean Update(long timeStamp) {
 		
-		boolean isSpacePressed = inputs.buttons[4].IsPressedNow();
+		//boolean isSpacePressed = inputs.buttons[4].IsPressedNow();
+		boolean isSpacePressed = inputs.buttons[4].isChanged;
 		// 스페이스바 누르면 재시작
 		if(gameScene == 2) {
 			if(isSpacePressed == true) {
@@ -357,6 +370,7 @@ public class MainFrame extends GameFrame {
 				numberOfEats = 0;
 				max_numberOfEats = 5;
 				numberOfBlocks = 0;
+				max_numberOfBlocks = 3;
 				start_time = timeStamp;
 				player_fish.eatCount = 0;
 				
@@ -368,6 +382,14 @@ public class MainFrame extends GameFrame {
 				player_fish.v_x = 0;
 				player_fish.v_y = 0;
 				audios.Loop("main_bgm", -1);
+
+			}
+
+			// 게임이 시작되지 않은 상태인데 백그라운드에서 돌아가는 것을 감추는 용도.
+			// 시작될 때는 이 값을 정상으로 돌려주어야 함.
+			else{
+				max_numberOfEats = 0;
+				max_numberOfBlocks = 0;
 			}
 		}
 		if(gameScene == 0) {
@@ -392,6 +414,7 @@ public class MainFrame extends GameFrame {
 				numberOfEats = 0;
 				max_numberOfEats = 5;
 				numberOfBlocks = 0;
+				max_numberOfBlocks = 3;
 				start_time = timeStamp;
 				player_fish.eatCount = 0;
 				
@@ -399,9 +422,14 @@ public class MainFrame extends GameFrame {
 				player_fish.v_y = 0;
 				eats.clear();
 				blocks.clear();
-				
 			}
 			
+			// 게임이 시작되지 않은 상태인데 백그라운드에서 돌아가는 것을 감추는 용도.
+			// 시작될 때는 이 값을 정상으로 돌려주어야 함.
+			else {
+				max_numberOfEats = 0;
+				max_numberOfBlocks = 0;
+			}
 		}
 
 		// 시간 지날수록 난이도 상승
@@ -534,6 +562,7 @@ public class MainFrame extends GameFrame {
 				for(Block block : blocks) {
 					if(player_fish.CollisionTest(block) == true) {
 						player_fish.isDead = true;
+						ending_text_select = 2;
 						break;
 					}
 				}				
@@ -659,6 +688,7 @@ public class MainFrame extends GameFrame {
 			//player_fish.hp -= hp_minus;
 			if(!hp.getMinus(hp_minus)) {
 				player_fish.isDead = true;
+				ending_text_select = 1;
 			}
 			timeStamp_hp = timeStamp;
 		}
@@ -670,8 +700,12 @@ public class MainFrame extends GameFrame {
 				isPlayedGameover = true;
 				gameScene = 2;
 				audios.Stop("main_bgm");
-//				audios.Stop("gameplay_bgm");
 				audios.Play("gameover_bgm");
+				
+				// 결과 기록
+				end_firstTime = firstSeconds;
+				end_secondTime = secondSeconds;
+				end_eatCount = player_fish.eatCount;
 			}
 			return true;
 		}
@@ -693,8 +727,9 @@ public class MainFrame extends GameFrame {
 			title_text.Draw(g);
 		}
 		// 게임 중 화면
-		else if(gameScene == 1 || gameScene == 2) {
+		else if(gameScene == 1) {
 			// 얘는 지금 이해 못해. 그냥 항상 이렇게 적는다고 생각해.
+			this.SetColor(Color.BLACK);
 			player_fish.Draw(g);
 			hp.Draw(g);
 			for(VisualObject eat : eats)
@@ -702,17 +737,25 @@ public class MainFrame extends GameFrame {
 			for(VisualObject block : blocks)
 				block.Draw(g);
 			
-			int firstSeconds = (int)(timeStamp_lastFrame - start_time) / 1000;
-			int secondSeconds = (int)(timeStamp_lastFrame - start_time) % 1000 / 100;
+			firstSeconds = (int)(timeStamp_lastFrame - start_time) / 1000;
+			secondSeconds = (int)(timeStamp_lastFrame - start_time) % 1000 / 100;
 			DrawString(settings.canvas_width / 2 - 100, 30, "참치가 버틴 시간: %d.%d초", firstSeconds, secondSeconds);
-			DrawString(settings.canvas_width / 2 - 100, 50, "참치가 먹은 새우:  %d 마리", player_fish.eatCount);
-			DrawString(settings.canvas_width / 2 - 100, 70, "참치의 체력: %.0f", hp.hp);
+			DrawString(settings.canvas_width / 2 - 100, 55, "참치가 먹은 새우: %d 마리", player_fish.eatCount);
+			DrawString(settings.canvas_width / 2 - 100, 80, "참치의 체력: %.0f", hp.hp);
 			//DrawString(player_fish.x, player_fish.y + 45, "연어의 체력: %.0f", player_fish.hp);
 		
-			// 게임오버 화면 그리기
-			if(gameScene == 2) {
-				title_over.Draw(g);
-			}
+		}
+		// 게임오버 화면 그리기
+		else if(gameScene == 2) {
+			title_over.Draw(g);
+			this.SetColor(Color.WHITE);
+		
+			if(ending_text_select == 1)
+				DrawString(settings.canvas_width / 2 - 120, 470, ending_text_starve, firstSeconds, secondSeconds);
+			else if (ending_text_select == 2)
+				DrawString(settings.canvas_width / 2 - 170, 470, ending_text_collide, firstSeconds, secondSeconds);
+			DrawString(settings.canvas_width / 2 - 100, 650, "버틴 시간: %d.%d초", firstSeconds, secondSeconds);
+			DrawString(settings.canvas_width / 2 - 100, 675, "먹은 새우: %d 마리", player_fish.eatCount);
 		}
 		
 		// 끝

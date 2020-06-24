@@ -170,7 +170,7 @@ public abstract class GameFrame extends JFrame implements IGameLoopMethods
 	 * <br>
 	 * 스타일은 PLAIN, BOLD, ITALIC, BOLDITALIC 중 하나를 선택할 수 있으며 생략하면 PLAIN으로 간주됩니다.<br>
 	 * 크기는 양수 범위 내에서 자유롭게 선택할 수 있으며 생략하면 12로 간주됩니다.
-	 * 
+	 * 나눔바른고딕 BOLD 30
 	 * @param fontName
 	 * 			가져올 글자체의 이름입니다. 필요한 경우 글자체의 크기와 스타일을 지정할 수도 있습니다.
 	 * @return 글자체를 성공적으로 가져왔는지 여부를 return합니다.
