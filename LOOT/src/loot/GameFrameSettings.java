@@ -15,7 +15,7 @@ public class GameFrameSettings
 	 * setTitle()을 통해 변경하지 않는 경우 창 제목은 이 필드의 값으로 계속 유지됩니다.<br>
 	 * 기본값은 "개발중!" 입니다.
 	 */
-	public String window_title = "개발중!";
+	public String window_title = "For Tuna";
 	
 	/**
 	 * 게임 화면의 가로 길이(픽셀 수)입니다.<br>
