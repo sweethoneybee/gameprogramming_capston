@@ -1,4 +1,5 @@
-# gameprogramming_capston
+# gameprogramming_capston  
+## For Tuna  
 
 ### Developing using _LOOT_ v1.9.
 
@@ -6,16 +7,16 @@
 
 ---
 
-### Images
+### Develop
+Game develop by **Seonghoon Jeong**  
 
-Tuna by **Seungmin Park**  
+### Images  
 Sea urchin, title, ending by **Hangyeul Lee**  
 Shirimp by Google image
+Tuna by **Seungmin Park**  
 
-### Sounds
-
+### Sounds    
 All sounds by **Hangyeul Lee**
 
-### QA
-
+### QA  
 QA by **Shiho Seong**
