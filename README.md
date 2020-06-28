@@ -12,7 +12,7 @@ Game develop by **Seonghoon Jeong**
 
 ### Images  
 Sea urchin, title, ending by **Hangyeul Lee**  
-Shirimp by Google image
+Shirimp by Google image  
 Tuna by **Seungmin Park**  
 
 ### Sounds    
