@@ -27,4 +27,7 @@ Tuna by **Seungmin Park**
 All sounds by **Hangyeul Lee**
 
 ### QA  
-QA by **Shiho Seong**
+QA by **Shiho Seong**  
+
+### Play Video  
+[https://youtu.be/FGfwm9omAH4](https://youtu.be/FGfwm9omAH4)
