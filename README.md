@@ -1,3 +1,4 @@
+![게임시작이미지_1](https://user-images.githubusercontent.com/25628769/115319632-32e8b580-a1bb-11eb-8cd3-e602d052e5e0.png)
 # For Tuna
 
 ## How to play
